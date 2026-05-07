@@ -51,6 +51,7 @@ Application::Application()
 
     // Setup editor
     m_Editor->SetScene(&m_Scene);
+    m_Editor->SetAIPanel(&m_AIPanel);
     m_Editor->OnAttach();
 
     // Setup demo scene
