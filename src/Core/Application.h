@@ -6,7 +6,6 @@
 #include "Render/Renderer.h"
 #include "Render/Camera.h"
 #include "Scene/Scene.h"
-// #include "Editor/EditorLayer.h"  // 暂时禁用
 
 namespace nebula {
 
@@ -33,7 +32,6 @@ private:
     Renderer m_Renderer;
     Camera m_Camera;
     Scene m_Scene;
-    // EditorLayer m_EditorLayer;  // 暂时禁用
     bool m_Running = true;
 
     static Application* s_Instance;

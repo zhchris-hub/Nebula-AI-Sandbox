@@ -60,6 +60,19 @@ FetchContent_Declare(imgui
 )
 FetchContent_MakeAvailable(imgui)
 
+# Box2D (physics)
+set(BOX2D_BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+set(BOX2D_BUILD_TESTBED OFF CACHE BOOL "" FORCE)
+set(BOX2D_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(box2d
+    GIT_REPOSITORY https://github.com/erincatto/box2d.git
+    GIT_TAG        v2.4.1
+)
+FetchContent_MakeAvailable(box2d)
+
+# Lua + sol2 (scripting) - temporarily disabled due to build issues
+# TODO: Fix Lua/sol2 integration
+
 # ── ImGui sources ──────────────────────────────────────────────────────
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
 set(IMGUI_SOURCES
@@ -90,7 +103,7 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
 add_library(Engine STATIC ${ENGINE_SOURCES} ${IMGUI_SOURCES})
 target_include_directories(Engine PUBLIC src)
 target_include_directories(Engine PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
-target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad EnTT::EnTT)
+target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad EnTT::EnTT box2d)
 
 # ── Main executable ────────────────────────────────────────────────────
 add_executable(${PROJECT_NAME} src/main.cpp)

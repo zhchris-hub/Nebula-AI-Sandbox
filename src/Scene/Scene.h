@@ -3,13 +3,15 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <nlohmann/json.hpp>
+#include <box2d/box2d.h>
+#include "Physics/PhysicsWorld.h"
 #include <string>
 #include <vector>
 #include <fstream>
 
 namespace nebula {
 
-// 组件定义
+// Components
 struct TagComponent {
     std::string Tag;
     TagComponent() = default;
@@ -39,6 +41,17 @@ struct ShapeComponent {
     ShapeComponent(ShapeType type) : Type(type) {}
 };
 
+struct RigidBodyComponent {
+    b2Body* Body = nullptr;
+    bool IsStatic = true;
+    float Density = 1.0f;
+    float Friction = 0.3f;
+    float Restitution = 0.2f;
+    RigidBodyComponent() = default;
+    RigidBodyComponent(bool isStatic, float density = 1.0f, float friction = 0.3f, float restitution = 0.2f)
+        : IsStatic(isStatic), Density(density), Friction(friction), Restitution(restitution) {}
+};
+
 class Entity {
 public:
     Entity() = default;
@@ -65,45 +78,47 @@ public:
     Scene(const std::string& name = "Untitled Scene");
     ~Scene();
 
-    // 实体管理
+    // Entity management
     Entity CreateEntity(const std::string& name = "Entity");
     void DestroyEntity(Entity entity);
 
-    // 组件操作
+    // Component operations
     void AddTransformComponent(Entity entity, const glm::vec2& position, const glm::vec2& scale, float rotation);
     void AddSpriteComponent(Entity entity, const glm::vec4& color);
     void AddShapeComponent(Entity entity, ShapeType type);
+    void AddRigidBodyComponent(Entity entity, bool isStatic, float density = 1.0f, float friction = 0.3f, float restitution = 0.2f);
 
     TransformComponent& GetTransformComponent(Entity entity);
     SpriteComponent& GetSpriteComponent(Entity entity);
     ShapeComponent& GetShapeComponent(Entity entity);
+    RigidBodyComponent& GetRigidBodyComponent(Entity entity);
 
     bool HasTransformComponent(Entity entity) const;
     bool HasSpriteComponent(Entity entity) const;
     bool HasShapeComponent(Entity entity) const;
+    bool HasRigidBodyComponent(Entity entity) const;
 
-    // 获取所有实体
+    // Get all entities
     const std::vector<Entity>& GetEntities() const { return m_Entities; }
 
-    // 场景更新
+    // Physics world
+    PhysicsWorld& GetPhysicsWorld() { return *m_PhysicsWorld; }
+    void SetGravity(const glm::vec2& gravity);
+
+    // Scene update
     void OnUpdate(float deltaTime);
     void OnRender(class Renderer& renderer);
 
-    // 场景信息
+    // Scene info
     const std::string& GetName() const { return m_Name; }
     void SetName(const std::string& name) { m_Name = name; }
     size_t GetEntityCount() const { return m_Entities.size(); }
-
-    // 序列化（暂时禁用）
-    // nlohmann::json Serialize() const;
-    // bool Deserialize(const nlohmann::json& json);
-    // bool SaveToFile(const std::string& filepath) const;
-    // bool LoadFromFile(const std::string& filepath);
 
 private:
     std::string m_Name;
     entt::registry m_Registry;
     std::vector<Entity> m_Entities;
+    std::unique_ptr<PhysicsWorld> m_PhysicsWorld;
 };
 
 } // namespace nebula

@@ -6,12 +6,20 @@
 namespace nebula {
 
 Scene::Scene(const std::string& name)
-    : m_Name(name) {
+    : m_Name(name), m_PhysicsWorld(std::make_unique<PhysicsWorld>()) {
     NEBULA_INFO("Scene created: {0}", m_Name);
 }
 
 Scene::~Scene() {
-    // 清理所有实体
+    for (auto& entity : m_Entities) {
+        if (HasRigidBodyComponent(entity)) {
+            auto& rb = GetRigidBodyComponent(entity);
+            if (rb.Body) {
+                m_PhysicsWorld->DestroyBody(rb.Body);
+                rb.Body = nullptr;
+            }
+        }
+    }
     m_Entities.clear();
     m_Registry.clear();
     NEBULA_INFO("Scene destroyed: {0}", m_Name);
@@ -45,6 +53,37 @@ void Scene::AddShapeComponent(Entity entity, ShapeType type) {
     m_Registry.emplace<ShapeComponent>(entity, type);
 }
 
+void Scene::AddRigidBodyComponent(Entity entity, bool isStatic, float density, float friction, float restitution) {
+    if (!HasTransformComponent(entity)) {
+        NEBULA_ERROR("Entity must have TransformComponent to add RigidBodyComponent");
+        return;
+    }
+
+    auto& transform = GetTransformComponent(entity);
+
+    b2BodyDef bodyDef;
+    bodyDef.position.Set(transform.Position.x / 30.0f, transform.Position.y / 30.0f);
+    bodyDef.angle = transform.Rotation;
+    bodyDef.type = isStatic ? b2_staticBody : b2_dynamicBody;
+
+    b2Body* body = m_PhysicsWorld->CreateBody(bodyDef);
+
+    b2PolygonShape shape;
+    shape.SetAsBox(transform.Scale.x / 30.0f / 2.0f, transform.Scale.y / 30.0f / 2.0f);
+
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &shape;
+    fixtureDef.density = density;
+    fixtureDef.friction = friction;
+    fixtureDef.restitution = restitution;
+
+    body->CreateFixture(&fixtureDef);
+
+    m_Registry.emplace<RigidBodyComponent>(entity, isStatic, density, friction, restitution);
+    auto& rb = m_Registry.get<RigidBodyComponent>(entity);
+    rb.Body = body;
+}
+
 TransformComponent& Scene::GetTransformComponent(Entity entity) {
     return m_Registry.get<TransformComponent>(entity);
 }
@@ -55,6 +94,10 @@ SpriteComponent& Scene::GetSpriteComponent(Entity entity) {
 
 ShapeComponent& Scene::GetShapeComponent(Entity entity) {
     return m_Registry.get<ShapeComponent>(entity);
+}
+
+RigidBodyComponent& Scene::GetRigidBodyComponent(Entity entity) {
+    return m_Registry.get<RigidBodyComponent>(entity);
 }
 
 bool Scene::HasTransformComponent(Entity entity) const {
@@ -69,8 +112,29 @@ bool Scene::HasShapeComponent(Entity entity) const {
     return m_Registry.all_of<ShapeComponent>(entity);
 }
 
+bool Scene::HasRigidBodyComponent(Entity entity) const {
+    return m_Registry.all_of<RigidBodyComponent>(entity);
+}
+
+void Scene::SetGravity(const glm::vec2& gravity) {
+    m_PhysicsWorld->SetGravity(gravity);
+}
+
 void Scene::OnUpdate(float deltaTime) {
-    (void)deltaTime;
+    // Update physics
+    m_PhysicsWorld->Step(deltaTime);
+
+    // Sync physics transforms to ECS
+    auto view = m_Registry.view<TransformComponent, RigidBodyComponent>();
+    for (auto entity : view) {
+        auto& transform = view.get<TransformComponent>(entity);
+        auto& rb = view.get<RigidBodyComponent>(entity);
+        if (rb.Body) {
+            b2Vec2 pos = rb.Body->GetPosition();
+            transform.Position = glm::vec2(pos.x * 30.0f, pos.y * 30.0f);
+            transform.Rotation = rb.Body->GetAngle();
+        }
+    }
 }
 
 void Scene::OnRender(Renderer& renderer) {
