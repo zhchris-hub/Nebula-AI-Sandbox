@@ -6,6 +6,8 @@
 #include "Render/Renderer.h"
 #include "Render/Camera.h"
 #include "Scene/Scene.h"
+#include "Tools/ToolRouter.h"
+#include "AI/AIPanel.h"
 
 namespace nebula {
 
@@ -21,6 +23,8 @@ public:
     Renderer& GetRenderer() { return m_Renderer; }
     Camera& GetCamera() { return m_Camera; }
     Scene& GetScene() { return m_Scene; }
+    ToolRouter& GetToolRouter() { return m_ToolRouter; }
+    AIPanel& GetAIPanel() { return m_AIPanel; }
 
     static Application& Get() { return *s_Instance; }
 
@@ -32,6 +36,8 @@ private:
     Renderer m_Renderer;
     Camera m_Camera;
     Scene m_Scene;
+    ToolRouter m_ToolRouter;
+    AIPanel m_AIPanel;
     bool m_Running = true;
 
     static Application* s_Instance;
