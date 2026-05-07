@@ -4,7 +4,11 @@
 #include "Tools/SceneTool.h"
 #include "Tools/RuntimeTool.h"
 #include "AI/DemoScene.h"
+#include "Editor/EditorLayer.h"
 #include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 namespace nebula {
 
@@ -12,7 +16,8 @@ Application* Application::s_Instance = nullptr;
 
 Application::Application()
     : m_Camera(-640.0f, 640.0f, -360.0f, 360.0f),
-      m_Scene("Main Scene")
+      m_Scene("Main Scene"),
+      m_Editor(std::make_unique<EditorLayer>())
 {
     s_Instance = this;
     Log::Init();
@@ -24,6 +29,16 @@ Application::Application()
     Input::Init(m_Window->GetNativeWindow());
     m_Renderer.Init();
 
+    // Setup ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(m_Window->GetNativeWindow(), true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
     // Register tools
     m_ToolRouter.RegisterTool(std::make_shared<SceneTool>(&m_Scene));
     m_ToolRouter.RegisterTool(std::make_shared<RuntimeTool>(&m_Scene));
@@ -31,6 +46,10 @@ Application::Application()
     // Initialize AI panel and agent
     m_AIPanel.Init(&m_ToolRouter);
     m_Agent.Init(&m_AIPanel, &m_ToolRouter);
+
+    // Setup editor
+    m_Editor->SetScene(&m_Scene);
+    m_Editor->OnAttach();
 
     // Setup demo scene
     DemoScene demo;
@@ -40,6 +59,12 @@ Application::Application()
 }
 
 Application::~Application() {
+    m_Editor->OnDetach();
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     m_Renderer.Shutdown();
 }
 
@@ -55,15 +80,24 @@ void Application::Run() {
         // Update physics
         m_Scene.OnUpdate(deltaTime);
 
+        // Start ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        // Render editor UI
+        m_Editor->OnImGuiRender();
+
+        // Render scene
         m_Renderer.SetClearColor({0.1f, 0.1f, 0.12f, 1.0f});
         m_Renderer.Clear();
-
         m_Renderer.BeginScene(m_Camera);
-
-        // Render all entities
         m_Scene.OnRender(m_Renderer);
-
         m_Renderer.EndScene();
+
+        // Render ImGui
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
         m_Window->OnUpdate();
     }

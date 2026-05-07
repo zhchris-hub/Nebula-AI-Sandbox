@@ -12,6 +12,8 @@
 
 namespace nebula {
 
+class EditorLayer;
+
 class Application {
 public:
     Application();
@@ -27,6 +29,7 @@ public:
     ToolRouter& GetToolRouter() { return m_ToolRouter; }
     AIPanel& GetAIPanel() { return m_AIPanel; }
     AgentOrchestrator& GetAgent() { return m_Agent; }
+    EditorLayer& GetEditor() { return *m_Editor; }
 
     static Application& Get() { return *s_Instance; }
 
@@ -41,6 +44,7 @@ private:
     ToolRouter m_ToolRouter;
     AIPanel m_AIPanel;
     AgentOrchestrator m_Agent;
+    std::unique_ptr<EditorLayer> m_Editor;
     bool m_Running = true;
 
     static Application* s_Instance;
