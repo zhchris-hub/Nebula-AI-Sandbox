@@ -25,63 +25,90 @@ std::string AIPanel::ProcessInput(const std::string& input) {
 
     NEBULA_INFO("Processing input: {0}", input);
 
-    // Parse intent from natural language
     auto [intent, params] = ParseIntent(input);
-
-    // Execute the intent
     std::string response = ExecuteIntent(intent, params);
-
-    // Store in history
     m_History.push_back({input, response});
 
     return response;
 }
 
 std::string AIPanel::ExecuteIntent(const std::string& intent, const nlohmann::json& params) {
+    if (intent == "__help") {
+        nlohmann::json result = {
+            {"success", true},
+            {"message", "Available tools"},
+            {"data", params["tools"]}
+        };
+        return result.dump(2);
+    }
+
     ToolResult result = m_ToolRouter->ExecuteTool(intent, params);
     return result.ToJson().dump(2);
 }
 
 std::pair<std::string, nlohmann::json> AIPanel::ParseIntent(const std::string& input) {
-    // Simple keyword-based parsing (placeholder for LLM integration)
     std::string lower = input;
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
-    // Scene operations
-    if (lower.find("create") != std::string::npos || lower.find("add") != std::string::npos) {
-        if (lower.find("entity") != std::string::npos || lower.find("object") != std::string::npos) {
-            nlohmann::json params = {{"action", "create_entity"}, {"entity_name", "New Entity"}};
-            return {"scene", params};
-        }
+    // Help / tool list
+    if (lower.find("help") != std::string::npos || lower.find("tools") != std::string::npos) {
+        nlohmann::json tools = m_ToolRouter->GetToolList();
+        return {"__help", {{"tools", tools}}};
     }
 
-    if (lower.find("delete") != std::string::npos || lower.find("remove") != std::string::npos) {
-        if (lower.find("entity") != std::string::npos || lower.find("object") != std::string::npos) {
-            // Try to extract entity ID
-            nlohmann::json params = {{"action", "destroy_entity"}};
-            return {"scene", params};
+    // Scene: create entity
+    if ((lower.find("create") != std::string::npos || lower.find("add") != std::string::npos || lower.find("spawn") != std::string::npos) &&
+        (lower.find("entity") != std::string::npos || lower.find("object") != std::string::npos || lower.find("box") != std::string::npos || lower.find("triangle") != std::string::npos)) {
+        std::string name = "New Entity";
+        if (lower.find("box") != std::string::npos) name = "Box";
+        else if (lower.find("triangle") != std::string::npos) name = "Triangle";
+
+        nlohmann::json params = {{"action", "create_entity"}, {"entity_name", name}};
+
+        // Parse position if mentioned
+        if (lower.find("at") != std::string::npos || lower.find("position") != std::string::npos) {
+            params["position"] = {{"x", 0.0f}, {"y", 0.0f}};
         }
+
+        return {"scene", params};
     }
 
-    if (lower.find("scene") != std::string::npos && lower.find("info") != std::string::npos) {
+    // Scene: delete entity
+    if ((lower.find("delete") != std::string::npos || lower.find("remove") != std::string::npos || lower.find("destroy") != std::string::npos) &&
+        (lower.find("entity") != std::string::npos || lower.find("object") != std::string::npos)) {
+        return {"scene", {{"action", "destroy_entity"}}};
+    }
+
+    // Scene: get info
+    if (lower.find("scene") != std::string::npos || lower.find("info") != std::string::npos ||
+        lower.find("status") != std::string::npos || lower.find("list") != std::string::npos) {
         return {"scene", {{"action", "get_scene_info"}}};
     }
 
-    if (lower.find("list") != std::string::npos && (lower.find("entity") != std::string::npos || lower.find("entities") != std::string::npos)) {
-        return {"scene", {{"action", "get_scene_info"}}};
-    }
-
-    // Physics operations
+    // Physics: set gravity
     if (lower.find("gravity") != std::string::npos) {
-        nlohmann::json params = {{"action", "set_gravity"}, {"gravity", {{"x", 0.0f}, {"y", -9.8f}}}};
-        return {"runtime", params};
+        float gx = 0.0f, gy = -9.8f;
+        if (lower.find("zero") != std::string::npos || lower.find("no") != std::string::npos || lower.find("disable") != std::string::npos) {
+            gx = 0.0f; gy = 0.0f;
+        } else if (lower.find("up") != std::string::npos) {
+            gx = 0.0f; gy = 9.8f;
+        }
+        return {"runtime", {{"action", "set_gravity"}, {"gravity", {{"x", gx}, {"y", gy}}}}};
     }
 
-    if (lower.find("physics") != std::string::npos && lower.find("info") != std::string::npos) {
+    // Physics: info
+    if (lower.find("physics") != std::string::npos) {
         return {"runtime", {{"action", "get_physics_info"}}};
     }
 
-    // Default: return scene info
+    // Scripting: run code
+    if (lower.find("lua") != std::string::npos || lower.find("script") != std::string::npos) {
+        if (lower.find("run") != std::string::npos || lower.find("execute") != std::string::npos) {
+            return {"scripting", {{"action", "run_code"}, {"code", "print('Hello from Lua!')"}}};
+        }
+    }
+
+    // Default: scene info
     return {"scene", {{"action", "get_scene_info"}}};
 }
 
