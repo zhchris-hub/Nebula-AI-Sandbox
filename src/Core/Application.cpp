@@ -3,6 +3,7 @@
 #include "Platform/Input.h"
 #include "Tools/SceneTool.h"
 #include "Tools/RuntimeTool.h"
+#include "Tools/ScriptingTool.h"
 #include "AI/DemoScene.h"
 #include "Editor/EditorLayer.h"
 #include <GLFW/glfw3.h>
@@ -42,6 +43,7 @@ Application::Application()
     // Register tools
     m_ToolRouter.RegisterTool(std::make_shared<SceneTool>(&m_Scene));
     m_ToolRouter.RegisterTool(std::make_shared<RuntimeTool>(&m_Scene));
+    m_ToolRouter.RegisterTool(std::make_shared<ScriptingTool>());
 
     // Initialize AI panel and agent
     m_AIPanel.Init(&m_ToolRouter);

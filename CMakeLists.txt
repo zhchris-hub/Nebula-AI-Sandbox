@@ -80,7 +80,7 @@ FetchContent_MakeAvailable(lua)
 # Build Lua as static library from fetched sources
 if(lua_POPULATED)
     file(GLOB LUA_SOURCES "${lua_SOURCE_DIR}/*.c")
-    list(REMOVE_ITEM LUA_SOURCES "${lua_SOURCE_DIR}/lua.c" "${lua_SOURCE_DIR}/luac.c")
+    list(REMOVE_ITEM LUA_SOURCES "${lua_SOURCE_DIR}/lua.c" "${lua_SOURCE_DIR}/luac.c" "${lua_SOURCE_DIR}/onelua.c")
     add_library(lua_lib STATIC ${LUA_SOURCES})
     target_include_directories(lua_lib PUBLIC "${lua_SOURCE_DIR}")
     set_target_properties(lua_lib PROPERTIES C_STANDARD 99)
