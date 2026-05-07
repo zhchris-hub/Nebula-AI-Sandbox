@@ -70,8 +70,28 @@ FetchContent_Declare(box2d
 )
 FetchContent_MakeAvailable(box2d)
 
-# Lua + sol2 (scripting) - temporarily disabled due to build issues
-# TODO: Fix Lua/sol2 integration
+# Lua (scripting) - build from official sources
+FetchContent_Declare(lua
+    GIT_REPOSITORY https://github.com/lua/lua.git
+    GIT_TAG        v5.4.7
+)
+FetchContent_MakeAvailable(lua)
+
+# Build Lua as static library from fetched sources
+if(lua_POPULATED)
+    file(GLOB LUA_SOURCES "${lua_SOURCE_DIR}/*.c")
+    list(REMOVE_ITEM LUA_SOURCES "${lua_SOURCE_DIR}/lua.c" "${lua_SOURCE_DIR}/luac.c")
+    add_library(lua_lib STATIC ${LUA_SOURCES})
+    target_include_directories(lua_lib PUBLIC "${lua_SOURCE_DIR}")
+    set_target_properties(lua_lib PROPERTIES C_STANDARD 99)
+endif()
+
+# sol2 (C++ Lua binding)
+FetchContent_Declare(sol2
+    GIT_REPOSITORY https://github.com/ThePhD/sol2.git
+    GIT_TAG        v3.3.0
+)
+FetchContent_MakeAvailable(sol2)
 
 # ── ImGui sources ──────────────────────────────────────────────────────
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
@@ -103,7 +123,7 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
 add_library(Engine STATIC ${ENGINE_SOURCES} ${IMGUI_SOURCES})
 target_include_directories(Engine PUBLIC src)
 target_include_directories(Engine PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
-target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad EnTT::EnTT box2d)
+target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad EnTT::EnTT box2d lua_lib sol2::sol2)
 
 # ── Main executable ────────────────────────────────────────────────────
 add_executable(${PROJECT_NAME} src/main.cpp)
