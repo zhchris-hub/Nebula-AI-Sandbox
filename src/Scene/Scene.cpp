@@ -1,6 +1,7 @@
 #include "Scene/Scene.h"
 #include "Render/Renderer.h"
 #include "Core/Log.h"
+#include <fstream>
 
 namespace nebula {
 

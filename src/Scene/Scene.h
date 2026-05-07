@@ -2,8 +2,10 @@
 
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
+#include <fstream>
 
 namespace nebula {
 
@@ -91,6 +93,12 @@ public:
     const std::string& GetName() const { return m_Name; }
     void SetName(const std::string& name) { m_Name = name; }
     size_t GetEntityCount() const { return m_Entities.size(); }
+
+    // 序列化（暂时禁用）
+    // nlohmann::json Serialize() const;
+    // bool Deserialize(const nlohmann::json& json);
+    // bool SaveToFile(const std::string& filepath) const;
+    // bool LoadFromFile(const std::string& filepath);
 
 private:
     std::string m_Name;
