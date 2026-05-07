@@ -23,10 +23,35 @@ public:
     void OnUpdate(float deltaTime) { (void)deltaTime; }
 
     void OnImGuiRender() {
-        // 简单的 ImGui 窗口
-        ImGui::Begin("Nebula AI Sandbox Editor");
+        // 主编辑器窗口
+        ImGui::Begin("Nebula AI Sandbox Editor", nullptr, ImGuiWindowFlags_MenuBar);
+
+        // 菜单栏
+        if (ImGui::BeginMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("Exit")) {
+                    // TODO: 退出应用
+                }
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("View")) {
+                ImGui::MenuItem("Show Demo", nullptr, &m_ShowDemo);
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
+
+        // 编辑器内容
         ImGui::Text("Welcome to Nebula AI Sandbox!");
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Separator();
+
+        // 场景信息
+        if (m_Scene) {
+            ImGui::Text("Scene: %s", m_Scene->GetName().c_str());
+            ImGui::Text("Entities: %zu", m_Scene->GetEntityCount());
+        }
+
         ImGui::End();
 
         // 绘制面板
@@ -34,6 +59,11 @@ public:
         DrawInspectorPanel();
         DrawConsolePanel();
         DrawViewportPanel();
+
+        // 显示 ImGui Demo
+        if (m_ShowDemo) {
+            ImGui::ShowDemoWindow(&m_ShowDemo);
+        }
     }
 
     void SetScene(Scene* scene) { m_Scene = scene; }
