@@ -27,8 +27,9 @@ Application::Application()
     m_ToolRouter.RegisterTool(std::make_shared<SceneTool>(&m_Scene));
     m_ToolRouter.RegisterTool(std::make_shared<RuntimeTool>(&m_Scene));
 
-    // Initialize AI panel
+    // Initialize AI panel and agent
     m_AIPanel.Init(&m_ToolRouter);
+    m_Agent.Init(&m_AIPanel, &m_ToolRouter);
 
     // Test entities with physics
     auto redTriangle = m_Scene.CreateEntity("Red Triangle");

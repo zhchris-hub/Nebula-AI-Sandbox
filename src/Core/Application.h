@@ -8,6 +8,7 @@
 #include "Scene/Scene.h"
 #include "Tools/ToolRouter.h"
 #include "AI/AIPanel.h"
+#include "AI/AgentOrchestrator.h"
 
 namespace nebula {
 
@@ -25,6 +26,7 @@ public:
     Scene& GetScene() { return m_Scene; }
     ToolRouter& GetToolRouter() { return m_ToolRouter; }
     AIPanel& GetAIPanel() { return m_AIPanel; }
+    AgentOrchestrator& GetAgent() { return m_Agent; }
 
     static Application& Get() { return *s_Instance; }
 
@@ -38,6 +40,7 @@ private:
     Scene m_Scene;
     ToolRouter m_ToolRouter;
     AIPanel m_AIPanel;
+    AgentOrchestrator m_Agent;
     bool m_Running = true;
 
     static Application* s_Instance;
