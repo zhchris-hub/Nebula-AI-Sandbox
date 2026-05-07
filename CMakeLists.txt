@@ -53,6 +53,25 @@ FetchContent_Declare(glad
 )
 FetchContent_MakeAvailable(glad)
 
+# ImGui
+FetchContent_Declare(imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG        v1.90.4
+)
+FetchContent_MakeAvailable(imgui)
+
+# ── ImGui sources ──────────────────────────────────────────────────────
+set(IMGUI_DIR ${imgui_SOURCE_DIR})
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+)
+
 # ── Engine library ─────────────────────────────────────────────────────
 file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
     "src/Core/*.cpp"
@@ -68,8 +87,9 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
     "src/Utils/*.cpp"
 )
 
-add_library(Engine STATIC ${ENGINE_SOURCES})
+add_library(Engine STATIC ${ENGINE_SOURCES} ${IMGUI_SOURCES})
 target_include_directories(Engine PUBLIC src)
+target_include_directories(Engine PUBLIC ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad EnTT::EnTT)
 
 # ── Main executable ────────────────────────────────────────────────────
