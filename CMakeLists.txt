@@ -39,6 +39,13 @@ FetchContent_Declare(json
 )
 FetchContent_MakeAvailable(json)
 
+# entt (ECS)
+FetchContent_Declare(entt
+    GIT_REPOSITORY https://github.com/skypjack/entt.git
+    GIT_TAG        v3.13.2
+)
+FetchContent_MakeAvailable(entt)
+
 # glad (OpenGL loader)
 FetchContent_Declare(glad
     GIT_REPOSITORY https://github.com/Dav1dde/glad.git
@@ -52,7 +59,6 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
     "src/Platform/*.cpp"
     "src/Render/*.cpp"
     "src/Scene/*.cpp"
-    "src/ECS/*.cpp"
     "src/Physics/*.cpp"
     "src/Scripting/*.cpp"
     "src/Assets/*.cpp"
@@ -64,7 +70,7 @@ file(GLOB_RECURSE ENGINE_SOURCES CONFIGURE_DEPENDS
 
 add_library(Engine STATIC ${ENGINE_SOURCES})
 target_include_directories(Engine PUBLIC src)
-target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad)
+target_link_libraries(Engine PUBLIC glfw spdlog::spdlog glm::glm nlohmann_json::nlohmann_json glad EnTT::EnTT)
 
 # ── Main executable ────────────────────────────────────────────────────
 add_executable(${PROJECT_NAME} src/main.cpp)

@@ -7,7 +7,8 @@ namespace nebula {
 Application* Application::s_Instance = nullptr;
 
 Application::Application()
-    : m_Camera(-640.0f, 640.0f, -360.0f, 360.0f)
+    : m_Camera(-640.0f, 640.0f, -360.0f, 360.0f),
+      m_Scene("Main Scene")
 {
     s_Instance = this;
     Log::Init();
@@ -18,6 +19,17 @@ Application::Application()
 
     Input::Init(m_Window->GetNativeWindow());
     m_Renderer.Init();
+
+    // 创建测试实体
+    auto redTriangle = m_Scene.CreateEntity("Red Triangle");
+    m_Scene.AddTransformComponent(redTriangle, glm::vec2{-200.0f, 0.0f}, glm::vec2{200.0f, 200.0f}, 0.0f);
+    m_Scene.AddSpriteComponent(redTriangle, glm::vec4{1.0f, 0.3f, 0.3f, 1.0f});
+    m_Scene.AddShapeComponent(redTriangle, ShapeType::Triangle);
+
+    auto greenQuad = m_Scene.CreateEntity("Green Quad");
+    m_Scene.AddTransformComponent(greenQuad, glm::vec2{200.0f, 0.0f}, glm::vec2{150.0f, 150.0f}, 0.0f);
+    m_Scene.AddSpriteComponent(greenQuad, glm::vec4{0.3f, 1.0f, 0.3f, 1.0f});
+    m_Scene.AddShapeComponent(greenQuad, ShapeType::Quad);
 
     NEBULA_INFO("Engine initialized.");
 }
@@ -34,9 +46,8 @@ void Application::Run() {
 
         m_Renderer.BeginScene(m_Camera);
 
-        // Test rendering: a red triangle and a green quad
-        m_Renderer.DrawTriangle({-200.0f, 0.0f}, {200.0f, 200.0f}, {1.0f, 0.3f, 0.3f, 1.0f});
-        m_Renderer.DrawQuad({200.0f, 0.0f}, {150.0f, 150.0f}, {0.3f, 1.0f, 0.3f, 1.0f});
+        // 使用Scene渲染所有实体
+        m_Scene.OnRender(m_Renderer);
 
         m_Renderer.EndScene();
 

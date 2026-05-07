@@ -5,6 +5,7 @@
 #include "Core/Event.h"
 #include "Render/Renderer.h"
 #include "Render/Camera.h"
+#include "Scene/Scene.h"
 
 namespace nebula {
 
@@ -19,6 +20,7 @@ public:
     Window& GetWindow() { return *m_Window; }
     Renderer& GetRenderer() { return m_Renderer; }
     Camera& GetCamera() { return m_Camera; }
+    Scene& GetScene() { return m_Scene; }
 
     static Application& Get() { return *s_Instance; }
 
@@ -29,6 +31,7 @@ private:
     std::unique_ptr<Window> m_Window;
     Renderer m_Renderer;
     Camera m_Camera;
+    Scene m_Scene;
     bool m_Running = true;
 
     static Application* s_Instance;
