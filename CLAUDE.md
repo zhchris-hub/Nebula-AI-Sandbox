@@ -18,15 +18,11 @@ cmake --build build
 # Build (Release)
 cmake --build build --config Release
 
-# Build with tests disabled
-cmake -B build -S . -DBUILD_TESTS=OFF
-cmake --build build
-
 # Run tests (after building with BUILD_TESTS=ON)
 cd build && ctest --output-on-failure
 ```
 
-Build requires CMake 3.20+ and a C++20 compiler. Dependencies (GLFW, spdlog, glm, nlohmann/json) are auto-fetched via FetchContent — no manual installation needed.
+Build requires CMake 3.20+ and a C++20 compiler (MSVC 2022). Dependencies are auto-fetched via FetchContent.
 
 ## Architecture
 
@@ -34,41 +30,45 @@ Two-layer design: **Engine Layer** (C++ runtime) and **AI Layer** (LLM-driven or
 
 **AI Pipeline:**
 ```
-User natural language → AI Panel → AgentOrchestrator → ToolRouter → C++ Engine APIs
+User natural language → AIPanel → AgentOrchestrator → ToolRouter → C++ Engine APIs
 ```
 
-**Implemented modules:**
-- `src/Core/` — Application singleton, spdlog logging (`NEBULA_TRACE/INFO/WARN/ERROR/CRITICAL` macros), event system with typed events and category bitmasks
-- `src/Platform/` — GLFW window (OpenGL 3.3 Core, 1280x720 default, VSync on), dispatches input/window events through callback
+**Implemented Modules:**
+- `src/Core/` — Application singleton, spdlog logging, event system
+- `src/Platform/` — GLFW window (OpenGL 3.3 Core, 1280x720)
+- `src/Render/` — Renderer, Camera, Shader
+- `src/Scene/` — ECS with entt, components (Tag, Transform, Sprite, Shape, RigidBody)
+- `src/Physics/` — Box2D wrapper (PhysicsWorld)
+- `src/Scripting/` — Lua/sol2 scripting (LuaScript)
+- `src/Editor/` — ImGui editor (Hierarchy, Inspector, Console, AI Chat panels)
+- `src/AI/` — AIPanel, AgentOrchestrator, DemoScene
+- `src/Tools/` — ITool interface, ToolRouter, SceneTool, RuntimeTool, ScriptingTool
 
-**Planned modules (directories exist, empty):** Render, Scene, ECS, Physics, Scripting, Assets, Editor, AI, Tools, Utils.
-
-**Tool System** — the bridge between AI and engine. Each tool returns:
+**Tool System** — bridge between AI and engine. Each tool returns:
 ```json
 { "success": true, "message": "...", "data": { ... } }
 ```
 
-Tool categories: Scene (CRUD entities, save/load), Assets (load textures, reload shaders), Runtime (simulation control, logs), Code (read/write files, compile, test), Scripting (Lua script management).
+**Registered Tools:**
+- `scene` — Entity CRUD, transform/color manipulation
+- `runtime` — Physics control, gravity, body management
+- `scripting` — Lua script load/execute/run_code
 
 ## Key Patterns
 
-- **Entry point:** Client code defines `CreateApplication()` returning an `Application*`. See `src/main.cpp` for the pattern.
-- **Event system:** `Event` base class with `EventType` enum and `EventCategory` bitmask. Concrete events (KeyPressed, MouseMoved, WindowClose, etc.) carry typed data. `EventCallbackFn = std::function<void(Event&)>`.
-- **Logging:** Always use the `NEBULA_*` macros from `Log.h`, never raw spdlog.
-- **Engine library:** All `src/` subdirectories compile into a single static `Engine` library. The main executable only contains `src/main.cpp`.
+- **Entry point:** `CreateApplication()` returns `Application*`. See `src/main.cpp`.
+- **Event system:** `Event` base with `EventType` enum and `EventCategory` bitmask.
+- **Logging:** Always use `NEBULA_*` macros from `Log.h`.
+- **ECS:** Components are plain structs. Scene manages entity lifecycle.
+- **Physics:** 30px = 1 meter scale factor for Box2D.
+- **Editor:** Forward-declare EditorLayer in header, include only in .cpp.
 
 ## Coding Conventions
 
-- **Classes:** PascalCase
-- **Functions:** PascalCase
-- **Variables:** camelCase
-- **Constants:** kCamelCase or UPPER_SNAKE_CASE
-- **Namespace:** `nebula`
-- **Principles:** Single responsibility, module isolation, AI layer separated from engine layer
-- **Language:** C++20
+- Classes: PascalCase, Functions: PascalCase, Variables: camelCase
+- Namespace: `nebula`
+- Language: C++20
 
 ## Dependencies
 
-**Currently fetched (in CMakeLists.txt):** GLFW 3.4, spdlog v1.14.1, glm 1.0.1, nlohmann/json v3.11.3
-
-**Planned (not yet added):** entt (ECS), Box2D (physics), Lua (scripting), Dear ImGui (editor UI), OpenGL loader (glad)
+GLFW 3.4, spdlog v1.14.1, glm 1.0.1, nlohmann/json v3.11.3, entt v3.13.2, glad v0.1.36, ImGui v1.90.4, Box2D v2.4.1, Lua 5.4.7, sol2 v3.3.0
